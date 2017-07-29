@@ -1,13 +1,30 @@
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import io.appium.java_client.TouchAction;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.AndroidElement;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.parser.Parser;
 import org.openqa.selenium.By;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.*;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Administrator on 2017/7/29 0029.
@@ -23,9 +40,283 @@ public class Union {
     private static final String AppiumServerIP = "http://127.0.0.1:4723/wd/hub";
     private static Logger logger = LoggerFactory.getLogger(Union.class);
     private static AndroidDriver<AndroidElement> driver = null;
-    private static final String LAST_DEPARTMENT = "";
+    private static boolean isException = false;
+    private static Set<String> departMentSet = new HashSet<>();
+    private static Set<String> personsSet = new HashSet<>();
+    private static Set<String> companySet = new HashSet<>();
+
+    private static boolean departmentover = true;
+
+    static {
+        companySet.add("监事会");
+        companySet.add("中国联通总部管理部门");
+//        companySet.add("中国联合网络通信(香港)股份有限公司");
+//        departMentSet.add("中国联通总部管理部门");
+//        departMentSet.add("管理层");
+//        departMentSet.add("综合部");
+//        departMentSet.add("企业发展部");
+//        departMentSet.add("资产运营部");
+//        departMentSet.add("财务部");
+//        departMentSet.add("管理层");
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(new File(PATH)))) {
+            String record = bufferedReader.readLine();
+            if (!StringUtils.isEmpty(record)) {
+                JSONObject jsonObject = JSON.parseObject(record);
+                String name = jsonObject.getString("name");
+                personsSet.add(name);
+            }
+
+        } catch (Exception e) {
+            logger.error("{}", e);
+        }
+    }
 
     public static void main(String[] args) throws Exception {
+        while (true) {
+            try {
+                login();
+                while (true) {
+                    AndroidElement department = null;
+//                    if (isException) {
+//                        department = getDepartment();
+//                        getPerson(department);
+//                    } else {
+//                        List<AndroidElement> departments = driver.findElementsByAccessibilityId("325");
+//
+//                    }
+                    if (departmentover) {
+                        getCompany();
+                        departmentover = false;
+                    }
+                    getDepartment();
+                    if (isException) {
+                        getPerson();
+                        isException = false;
+                    } else {
+//                        department.click();
+                        new WebDriverWait(driver, 60).until(new ExpectedCondition<Boolean>() {
+                            @Override
+                            public Boolean apply(WebDriver driver) {
+                                String desc = ((AndroidDriver) driver).findElementByAccessibilityId("61").getAttribute("text");
+                                if (StringUtils.equals(desc, "发短信")) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            }
+                        });
+                    }
+//                    getPerson(department);
+                    String befor = driver.getPageSource();
+                    String after = befor;
+                    do {
+                        List<AndroidElement> nameList = driver.findElementsByAccessibilityId("50");
+
+
+                        for (WebElement webElement : nameList) {
+                            webElement.click();
+                            new WebDriverWait(driver, 60).until(new ExpectedCondition<Boolean>() {
+                                @Override
+                                public Boolean apply(WebDriver driver) {
+                                    String text = ((AndroidDriver) driver).findElementByAccessibilityId("32").getAttribute("text");
+                                    if (StringUtils.isEmpty(text)) {
+                                        return false;
+                                    } else {
+                                        return true;
+                                    }
+                                }
+                            });
+                            String page = driver.getPageSource();
+                            save(page);
+                            driver.findElementByAccessibilityId("4").click();
+                            new WebDriverWait(driver, 60).until(new ExpectedCondition<Boolean>() {
+                                @Override
+                                public Boolean apply(WebDriver driver) {
+                                    if (StringUtils.equals(((AndroidDriver) driver).findElementByAccessibilityId("9").getAttribute("text"), "通讯录")) {
+                                        return true;
+                                    } else {
+                                        return false;
+                                    }
+                                }
+                            });
+                        }
+
+
+                        int width = driver.manage().window().getSize().width;
+                        int height = driver.manage().window().getSize().height;
+                        befor = driver.getPageSource();
+                        driver.swipe(width / 2, height * 3 / 4, width / 2, height / 4, 3000);
+                        new WebDriverWait(driver, 60).until(new ExpectedCondition<Boolean>() {
+                            @Override
+                            public Boolean apply(WebDriver driver) {
+                                if (StringUtils.equals(((AndroidDriver) driver).findElementByAccessibilityId("6").getAttribute("text"), "个人信息")) {
+                                    ((AndroidDriver) driver).findElementByAccessibilityId("4").click();
+                                    return false;
+                                } else if (StringUtils.equals(((AndroidDriver) driver).findElementByAccessibilityId("9").getAttribute("text"), "通讯录")) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            }
+                        });
+                        after = driver.getPageSource();
+                    } while (!StringUtils.equals(after, befor));
+
+                    driver.findElementByAccessibilityId("7").click();
+                    new WebDriverWait(driver, 60).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.TextView[@text=\"全国通讯录\"]")));
+
+                }
+            } catch (Exception e) {
+                isException = true;
+                logger.error("{}", e);
+                File file = driver.getScreenshotAs(OutputType.FILE);
+                FileUtils.copyFile(file, new File("D:\\union\\1.png"));
+            }
+        }
+    }
+
+    private static AndroidElement getDepartment() {
+
+        AndroidElement departMent = null;
+        String after = driver.getPageSource();
+        String befor = "";
+        do {
+
+            List<AndroidElement> departMents = driver.findElementsByAccessibilityId("324");
+            if (departMentSet.size() == 0) {
+                String name = departMents.get(0).getAttribute("text");
+                departMents.get(0).click();
+                new WebDriverWait(driver, 60).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.TextView[@text=\"通讯录\"]")));
+                String page = driver.getPageSource();
+                if (StringUtils.contains(page, "没有")) {
+                    ((AndroidDriver) driver).findElementByAccessibilityId("7").click();
+                    new WebDriverWait(driver, 60).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.TextView[@text=\"全国通讯录\"]")));
+                    departMentSet.add(name);
+                    continue;
+                }
+
+                new WebDriverWait(driver, 60).until(new ExpectedCondition<Boolean>() {
+                    @Override
+                    public Boolean apply(WebDriver driver) {
+                        if (StringUtils.equals(((AndroidDriver) driver).findElementByAccessibilityId("6").getAttribute("text"), "个人信息")) {
+                            ((AndroidDriver) driver).findElementByAccessibilityId("4").click();
+                            return false;
+                        } else if (StringUtils.equals(((AndroidDriver) driver).findElementByAccessibilityId("9").getAttribute("text"), "通讯录")) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                });
+                return departMents.get(0);
+            }
+            for (int i = 0; i < departMents.size(); i++) {
+                AndroidElement temp = departMents.get(i);
+                //如果i包括但是i+1不包括
+                String departName = temp.getAttribute("text");
+                logger.info("{}", departName);
+                if (departMentSet.contains(departName) && (i + 1 < departMents.size() && !departMentSet.contains(departMents.get(i + 1).getAttribute("text")))) {
+
+                    if (isException) {
+                        String name = temp.getAttribute("text");
+                        temp.click();
+                        new WebDriverWait(driver, 60).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.TextView[@text=\"通讯录\"]")));
+                        String page = driver.getPageSource();
+                        if (StringUtils.contains(page, "没有")) {
+                            ((AndroidDriver) driver).findElementByAccessibilityId("7").click();
+                            new WebDriverWait(driver, 60).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.TextView[@text=\"全国通讯录\"]")));
+                            departMentSet.add(name);
+                            departMentSet.add(departMents.get(i + 1).getAttribute("text"));
+//                            i--;
+                            continue;
+                        }
+                        departMentSet.add(name);
+                        return temp;
+                    } else {
+                        String name = departMents.get(i + 1).getAttribute("text");
+                        departMents.get(i + 1).click();
+                        new WebDriverWait(driver, 60).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.TextView[@text=\"通讯录\"]")));
+                        String page = driver.getPageSource();
+                        if (StringUtils.contains(page, "没有")) {
+                            ((AndroidDriver) driver).findElementByAccessibilityId("7").click();
+                            new WebDriverWait(driver, 60).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.TextView[@text=\"全国通讯录\"]")));
+                            departMentSet.add(name);
+                            continue;
+                        }
+                        departMentSet.add(name);
+                        return departMents.get(i + 1);
+                    }
+                } else if (departMentSet.contains(temp.getAttribute("text")) && i + 1 >= departMents.size()) {
+                    break;
+                }
+            }
+            int width = driver.manage().window().getSize().width;
+            int height = driver.manage().window().getSize().height;
+            befor = driver.getPageSource();
+            driver.swipe(width / 2, height * 3 / 4, width / 2, height / 4, 3000);
+            after = driver.getPageSource();
+        } while (!StringUtils.equals(after, befor));
+        departmentover = true;
+        return departMent;
+    }
+
+    //定位到某一页
+    private static AndroidElement getPerson() {
+        AndroidElement result = null;
+//        department.click();
+        new WebDriverWait(driver, 60).until(new ExpectedCondition<Boolean>() {
+            @Override
+            public Boolean apply(WebDriver driver) {
+//                String page = driver.getPageSource();
+//                if (StringUtils.contains(page, "没有")) {
+//                    ((AndroidDriver) driver).findElementByAccessibilityId("7").click();
+//                    new WebDriverWait(driver, 60).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.TextView[@text=\"全国通讯录\"]")));
+//                    return true;
+//                }
+                String desc = ((AndroidDriver) driver).findElementByAccessibilityId("61").getAttribute("text");
+                if (StringUtils.equals(desc, "发短信")) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        });
+
+        String befor = driver.getPageSource();
+        String after = befor;
+        do {
+            List<AndroidElement> persons = driver.findElementsByAccessibilityId("50");
+            for (AndroidElement person : persons) {
+                String name = person.getAttribute("text");
+                if (!personsSet.contains(name)) {
+                    isException = false;
+                    return person;
+                }
+            }
+            int width = driver.manage().window().getSize().width;
+            int height = driver.manage().window().getSize().height;
+            befor = driver.getPageSource();
+            driver.swipe(width / 2, height * 3 / 4, width / 2, height / 4, 3000);
+            new WebDriverWait(driver, 60).until(new ExpectedCondition<Boolean>() {
+                @Override
+                public Boolean apply(WebDriver driver) {
+                    if (StringUtils.equals(((AndroidDriver) driver).findElementByAccessibilityId("6").getAttribute("text"), "个人信息")) {
+                        ((AndroidDriver) driver).findElementByAccessibilityId("4").click();
+                        return false;
+                    } else if (StringUtils.equals(((AndroidDriver) driver).findElementByAccessibilityId("9").getAttribute("text"), "通讯录")) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            });
+            after = driver.getPageSource();
+        } while (!StringUtils.equals(befor, after));
+        return result;
+    }
+
+
+    private static void login() throws Exception {
         DesiredCapabilities capabilities = DesiredCapabilities.android();
         capabilities.setCapability("deviceName", deviceName);
         capabilities.setCapability("platformVersion", platformVersion);
@@ -47,5 +338,80 @@ public class Union {
         driver.findElement(By.xpath("//android.widget.TextView[@text=\"全国通讯录\"]")).click();
         new WebDriverWait(driver, 20).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.TextView[@text=\"中国联通总部管理部门\"]")));
 
+    }
+
+    private static void save(String page) throws IOException {
+        logger.info("开始提取联系人资料  page:{}", page);
+        JSONObject jsonObject = new JSONObject();
+        Document document = Jsoup.parse(page, "", Parser.xmlParser());
+        String name = document.getElementsByAttributeValue("content-desc", "27").attr("text");
+        String position = document.getElementsByAttributeValue("content-desc", "32").attr("text");
+        String room_num = document.getElementsByAttributeValue("content-desc", "37").attr("text");
+        String tel = document.getElementsByAttributeValue("content-desc", "43").attr("text");
+        String mobile = document.getElementsByAttributeValue("content-desc", "57").attr("text");
+        String email = document.getElementsByAttributeValue("content-desc", "65").attr("text");
+        jsonObject.put("name", name);
+        jsonObject.put("position", position);
+        jsonObject.put("room_num", room_num);
+        jsonObject.put("tel", tel);
+        jsonObject.put("mobile", mobile);
+        jsonObject.put("email", email);
+        logger.info("提取结果为：{}", jsonObject);
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(new File(PATH), true))) {
+            bufferedWriter.write(jsonObject.toJSONString() + "\n");
+            personsSet.add(name);
+            bufferedWriter.flush();
+        } catch (Exception e) {
+            logger.error("{}", e);
+        }
+    }
+
+    private static AndroidElement getCompany() {
+        driver.findElementByAccessibilityId("305").click();
+        new WebDriverWait(driver, 60).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.Button[@text=\"确定\"]")));
+        String after = driver.getPageSource();
+        String befor = after;
+        do {
+            List<AndroidElement> elements = driver.findElements(By.xpath("//android.widget.TextView"));
+            if (companySet.size() == 0) {
+                return elements.get(0);
+            }
+
+            for (int i = 0; i < elements.size(); i++) {
+                AndroidElement androidElement = elements.get(i);
+                String text = androidElement.getAttribute("text");
+                logger.info("{}", text);
+
+                if (companySet.contains(text) && (i + 1 < elements.size() && !companySet.contains(elements.get(i + 1).getAttribute("text")))) {
+
+                    if (isException) {
+                        companySet.add(androidElement.getAttribute("text"));
+                        androidElement.click();
+                        driver.findElement(By.xpath("//android.widget.Button[@text=\"确定\"]")).click();
+                        new WebDriverWait(driver, 60).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.TextView[@text=\"全国通讯录\"]")));
+                        departMentSet.clear();
+                        return androidElement;
+                    } else {
+                        companySet.add(elements.get(i + 1).getAttribute("text"));
+                        elements.get(i + 1).click();
+                        driver.findElement(By.xpath("//android.widget.Button[@text=\"确定\"]")).click();
+                        new WebDriverWait(driver, 60).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.TextView[@text=\"全国通讯录\"]")));
+                        departMentSet.clear();
+                        return elements.get(i + 1);
+                    }
+                } else if (companySet.contains(androidElement.getAttribute("text")) && i + 1 >= elements.size()) {
+                    break;
+                }
+            }
+
+            int width = driver.manage().window().getSize().width;
+            int height = driver.manage().window().getSize().height;
+            befor = driver.getPageSource();
+            TouchAction touchAction = new TouchAction(driver);
+            touchAction.press(width / 2, height * 2 / 3).waitAction(3000).moveTo(width / 2, height / 3).release();
+            touchAction.perform();
+            after = driver.getPageSource();
+        } while (!StringUtils.equals(after, befor));
+        return null;
     }
 }
