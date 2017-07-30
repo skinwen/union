@@ -40,7 +40,7 @@ public class Union {
     private static final String AppiumServerIP = "http://127.0.0.1:4723/wd/hub";
     private static Logger logger = LoggerFactory.getLogger(Union.class);
     private static AndroidDriver<AndroidElement> driver = null;
-    private static boolean isException = false;
+    private static boolean isException = true;
     private static Set<String> departMentSet = new HashSet<>();
     private static Set<String> personsSet = new HashSet<>();
     private static Set<String> companySet = new HashSet<>();
@@ -50,22 +50,79 @@ public class Union {
     static {
         companySet.add("监事会");
         companySet.add("中国联通总部管理部门");
-//        companySet.add("中国联合网络通信(香港)股份有限公司");
-//        departMentSet.add("中国联通总部管理部门");
-//        departMentSet.add("管理层");
-//        departMentSet.add("综合部");
-//        departMentSet.add("企业发展部");
-//        departMentSet.add("资产运营部");
-//        departMentSet.add("财务部");
-//        departMentSet.add("管理层");
-        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(new File(PATH)))) {
-            String record = bufferedReader.readLine();
-            if (!StringUtils.isEmpty(record)) {
-                JSONObject jsonObject = JSON.parseObject(record);
-                String name = jsonObject.getString("name");
-                personsSet.add(name);
-            }
+        companySet.add("中国联合网络通信(香港)股份有限公司");
+        companySet.add("中国联合网络通信股份有限公司(A股公司)");
+        companySet.add("中讯邮电咨询设计院有限公司");
+        companySet.add("联通兴业通信技术有限公司");
+        companySet.add("联通华盛通信有限公司");
+        companySet.add("联通时科（北京）信息技术有限公司");
+        companySet.add("联通宽带在线有限公司");
+        companySet.add("联通系统集成有限公司");
+        companySet.add("联通信息导航有限公司");
+        companySet.add("联通支付有限公司");
+        companySet.add("联通支付有限公司总部");
+        companySet.add("联通系统集成有限公司");
+        companySet.add("联通系统集成有限公司");
+        companySet.add("中融信息服务有限公司");
+        companySet.add("中国联通国际有限公司");
+        companySet.add("中国联通研究院");
+        companySet.add("中网威信电子安全服务有限公司");
+        companySet.add("京都信苑饭店");
+        companySet.add("联通通信建设有限公司");
+        companySet.add("联通进出口有限公司");
+        companySet.add("联通云数据有限公司");
+        companySet.add("联通网络技术研究院");
+        companySet.add("联通创新创业投资有限公司");
+        companySet.add("小沃科技有限公司");
+        companySet.add("联通软件研究院");
+        companySet.add("联通智网科技有限公司");
+        companySet.add("联通集团财务有限公司");
+        companySet.add("北京联通兴业科贸有限公司");
+        companySet.add("联通学院");
+        companySet.add("大数据公司筹备组");
+        companySet.add("中国联通北京市分公司");
+//        companySet.add("中讯邮电咨询设计院有限公司");
+        departMentSet.add("本部");
+//        departMentSet.add("联通系统集成有限公司本部");
+//        departMentSet.add("联通系统集成有限公司黑龙江省分公司");
+//        departMentSet.add("联通系统集成有限公司山东省分公司");
+//        departMentSet.add("联通系统集成有限公司吉林省分公司");
+//        departMentSet.add("联通系统集成有限公司内蒙古分公司");
+//        departMentSet.add("联通系统集成有限公司河南省分公司");
+//        departMentSet.add("联通系统集成有限公司山西省分公司");
+//        departMentSet.add("联通系统集成有限公司河北省分公司");
+//        departMentSet.add("联通系统集成有限公司辽宁省分公司");
+//        departMentSet.add("联通系统集成有限公司天津市分公司");
+//        departMentSet.add("联通系统集成有限公司山西省分公司");
+//        departMentSet.add("联通系统集成有限公司四川省分公司");
+//        departMentSet.add("联通系统集成有限公司江苏省分公司");
+//        departMentSet.add("联通系统集成有限公司重庆市分公司");
+//        departMentSet.add("联通系统集成有限公司浙江省分公司");
+//        departMentSet.add("联通系统集成有限公司福建省分公司");
+//        departMentSet.add("联通系统集成有限公司广东省分公司");
+//        departMentSet.add("联通系统集成有限公司上海市分公司");
+//        departMentSet.add("联通系统集成有限公司安徽省分公司");
+//        departMentSet.add("联通系统集成有限公司广西分公司");
+//        departMentSet.add("联通系统集成有限公司陕西省分公司");
+//        departMentSet.add("联通系统集成有限公司青海省分公司");
+//        departMentSet.add("联通系统集成有限公司江西省分公司");
+//        departMentSet.add("联通系统集成有限公司海南省分公司");
+//        departMentSet.add("联通（山东）产业互联网有限公司");
+//        departMentSet.add("联通系统集成有限公司湖北省分公司");
+//        departMentSet.add("联通系统集成有限公司新疆分公司");
+//        departMentSet.add("联通系统集成有限公司云南分公司");
+//        departMentSet.add("联通系统集成有限公司.北京市分公司");
+//        departMentSet.add("联通系统集成有限公司湖南省分公司");
 
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(new File(PATH)))) {
+            String record = null;
+            while ((record = bufferedReader.readLine()) != null) {
+                if (!StringUtils.isEmpty(record)) {
+                    JSONObject jsonObject = JSON.parseObject(record);
+                    String name = jsonObject.getString("name");
+                    personsSet.add(name);
+                }
+            }
         } catch (Exception e) {
             logger.error("{}", e);
         }
@@ -84,21 +141,24 @@ public class Union {
 //                        List<AndroidElement> departments = driver.findElementsByAccessibilityId("325");
 //
 //                    }
-                    if (departmentover) {
+                    if (departmentover || isException) {
                         getCompany();
                         departmentover = false;
                     }
-                    getDepartment();
+                    department = getDepartment();
+                    if (departmentover) {
+                        continue;
+                    }
                     if (isException) {
-                        getPerson();
+                        department = getPerson();
                         isException = false;
                     } else {
 //                        department.click();
                         new WebDriverWait(driver, 60).until(new ExpectedCondition<Boolean>() {
                             @Override
                             public Boolean apply(WebDriver driver) {
-                                String desc = ((AndroidDriver) driver).findElementByAccessibilityId("61").getAttribute("text");
-                                if (StringUtils.equals(desc, "发短信")) {
+                                String desc = driver.getPageSource();
+                                if (!StringUtils.contains(desc, "通讯录")) {
                                     return true;
                                 } else {
                                     return false;
@@ -184,31 +244,54 @@ public class Union {
 
             List<AndroidElement> departMents = driver.findElementsByAccessibilityId("324");
             if (departMentSet.size() == 0) {
-                String name = departMents.get(0).getAttribute("text");
-                departMents.get(0).click();
-                new WebDriverWait(driver, 60).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.TextView[@text=\"通讯录\"]")));
-                String page = driver.getPageSource();
-                if (StringUtils.contains(page, "没有")) {
-                    ((AndroidDriver) driver).findElementByAccessibilityId("7").click();
-                    new WebDriverWait(driver, 60).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.TextView[@text=\"全国通讯录\"]")));
-                    departMentSet.add(name);
+                if (departMents.size() <= 1) {
+                    departMentSet.add(departMents.get(0).getAttribute("text"));
                     continue;
                 }
-
-                new WebDriverWait(driver, 60).until(new ExpectedCondition<Boolean>() {
-                    @Override
-                    public Boolean apply(WebDriver driver) {
-                        if (StringUtils.equals(((AndroidDriver) driver).findElementByAccessibilityId("6").getAttribute("text"), "个人信息")) {
-                            ((AndroidDriver) driver).findElementByAccessibilityId("4").click();
-                            return false;
-                        } else if (StringUtils.equals(((AndroidDriver) driver).findElementByAccessibilityId("9").getAttribute("text"), "通讯录")) {
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    }
-                });
-                return departMents.get(0);
+                String name = departMents.get(1).getAttribute("text");
+                departMentSet.add(name);
+                departMents.get(1).click();
+                return departMents.get(1);
+//                new WebDriverWait(driver, 60).until(new ExpectedCondition<Boolean>() {
+//                    @Override
+//                    public Boolean apply(WebDriver driver) {
+//                        String page = driver.getPageSource();
+//                        if (StringUtils.contains(page, "通讯录") || StringUtils.contains(page, "公司信息")) {
+//                            return true;
+//                        } else {
+//                            return false;
+//                        }
+//                    }
+//                });
+//                String page = driver.getPageSource();
+//                if(StringUtils.contains(page,"公司信息")){
+//                    ((AndroidDriver) driver).findElementByAccessibilityId("4").click();
+//                    new WebDriverWait(driver, 60).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.TextView[@text=\"全国通讯录\"]")));
+//                    departMentSet.add(name);
+//                    continue;
+//                }
+//                if (StringUtils.contains(page, "没有") ) {
+//                    ((AndroidDriver) driver).findElementByAccessibilityId("7").click();
+//                    new WebDriverWait(driver, 60).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.TextView[@text=\"全国通讯录\"]")));
+//                    departMentSet.add(name);
+//                    continue;
+//                }
+//
+//                new WebDriverWait(driver, 60).until(new ExpectedCondition<Boolean>() {
+//                    @Override
+//                    public Boolean apply(WebDriver driver) {
+//                        if (StringUtils.contains(driver.getPageSource(), "公司信息") || StringUtils.contains(driver.getPageSource(), "个人信息")) {
+//                            ((AndroidDriver) driver).findElementByAccessibilityId("4").click();
+//                            return false;
+//                        } else if (StringUtils.contains(((AndroidDriver) driver).getPageSource(), "全国通讯录")) {
+//                            return true;
+//                        } else {
+//                            return false;
+//                        }
+//                    }
+//                });
+//                departMents.get(0).click();
+//                return departMents.get(0);
             }
             for (int i = 0; i < departMents.size(); i++) {
                 AndroidElement temp = departMents.get(i);
@@ -257,6 +340,7 @@ public class Union {
             after = driver.getPageSource();
         } while (!StringUtils.equals(after, befor));
         departmentover = true;
+        isException = false;
         return departMent;
     }
 
@@ -389,14 +473,18 @@ public class Union {
                         androidElement.click();
                         driver.findElement(By.xpath("//android.widget.Button[@text=\"确定\"]")).click();
                         new WebDriverWait(driver, 60).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.TextView[@text=\"全国通讯录\"]")));
-                        departMentSet.clear();
+                        if (!isException) {
+                            departMentSet.clear();
+                        }
                         return androidElement;
                     } else {
                         companySet.add(elements.get(i + 1).getAttribute("text"));
                         elements.get(i + 1).click();
                         driver.findElement(By.xpath("//android.widget.Button[@text=\"确定\"]")).click();
                         new WebDriverWait(driver, 60).until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.widget.TextView[@text=\"全国通讯录\"]")));
-                        departMentSet.clear();
+                        if (!isException) {
+                            departMentSet.clear();
+                        }
                         return elements.get(i + 1);
                     }
                 } else if (companySet.contains(androidElement.getAttribute("text")) && i + 1 >= elements.size()) {
